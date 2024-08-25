@@ -1,11 +1,12 @@
-import { app, BrowserWindow } from "electron";
-// import { createRequire } from "node:module";
+import { app, BrowserWindow, ipcMain } from "electron";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-// const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const { _electron } = require("playwright");
 
 // The built directory structure
 //
@@ -16,6 +17,23 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // │ │ ├── main.js
 // │ │ └── preload.mjs
 // │
+
+const openPlaywright = async () => {
+  console.log();
+  try {
+    const electronApp = await _electron.launch({
+      executablePath: app.getPath("exe"),
+    });
+    const window = await electronApp.firstWindow();
+    await window.goto("https://tes.tidesquare.com/login");
+  } catch (error) {
+    console.log(error);
+    win?.webContents.send("fail", {
+      place: "submit-form",
+    });
+  }
+};
+
 process.env.APP_ROOT = path.join(__dirname, "..");
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -51,6 +69,11 @@ function createWindow() {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
+
+ipcMain.on("click", async () => {
+  await openPlaywright();
+});
+
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();

@@ -1,7 +1,10 @@
 function App() {
+  const handleClick = () => {
+    window.ipcRenderer.send("click");
+  };
   return (
     <>
-      <div>xin chào</div>
+      <div onClick={handleClick}>xin chào</div>
     </>
   );
 }
