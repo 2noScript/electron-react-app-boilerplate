@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -18,22 +18,6 @@ const { _electron } = require("playwright");
 // │ │ └── preload.mjs
 // │
 
-const openPlaywright = async () => {
-  console.log();
-  try {
-    const electronApp = await _electron.launch({
-      executablePath: app.getPath("exe"),
-    });
-    const window = await electronApp.firstWindow();
-    await window.goto("https://tes.tidesquare.com/login");
-  } catch (error) {
-    console.log(error);
-    win?.webContents.send("fail", {
-      place: "submit-form",
-    });
-  }
-};
-
 process.env.APP_ROOT = path.join(__dirname, "..");
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
@@ -47,6 +31,7 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
+    title: "main",
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
@@ -64,15 +49,25 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
+
+  // ipcMain.handle("create-new-window", () => {
+  //   const newWindow = new BrowserWindow({
+  //     width: 800,
+  //     height: 600,
+  //     webPreferences: {
+  //       nodeIntegration: true,
+  //       contextIsolation: false,
+  //       preload: path.join(__dirname, "preload.js"),
+  //     },
+  //   });
+  //   return newWindow.id; // Trả về ID của cửa sổ mới để Playwright có thể nhận diện
+  // });
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 
-ipcMain.on("click", async () => {
-  await openPlaywright();
-});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -90,3 +85,6 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(createWindow);
+
+console.log(`Running in production mode ${import.meta.env.MODE}`);
+
